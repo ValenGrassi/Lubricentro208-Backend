@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+}
+
+model Vehicle {
+  id Int @id @default(autoincrement())
+
+  plate String @unique
+
+  mileage Int
+
+  brand String?
+  model String?
+
+  ownerName String?
+  phone String?
+
+  oilType String?
+
+  oilFilter Boolean @default(false)
+  airFilter Boolean @default(false)
+  fuelFilter Boolean @default(false)
+  cabinFilter Boolean @default(false)
+
+  serviceDate DateTime @default(now())
+  nextServiceMileage Int?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
