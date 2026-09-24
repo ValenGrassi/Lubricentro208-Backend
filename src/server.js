@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
+import settingsRoutes from "./routes/settingsRoutes.js";
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 
 app.use("/api/vehicles", vehicleRoutes);
+
+app.use("/api/settings", settingsRoutes);
 
 app.get("/", (req, res) => {
   res.send("API funcionando");

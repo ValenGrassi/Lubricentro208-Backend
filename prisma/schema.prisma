@@ -36,8 +36,26 @@ model Vehicle {
   serviceDate DateTime @default(now())
   nextServiceMileage Int?
 
+  // Se pone en true cuando el admin hace click en el link de WhatsApp
+  // desde el panel de recontacto. Se vuelve a false cuando cambia serviceDate.
+  recontacto Boolean @default(false)
+  // Fecha en que se hizo el recontacto (para mostrar "Recontactado el ...").
+  // Se limpia cuando cambia serviceDate.
+  recontactedAt DateTime?
+
   notes String?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+// Configuración única del sistema (una sola fila, id = 1).
+model Settings {
+  id Int @id @default(1)
+
+  // Cada cuántos meses se considera que un vehículo necesita service.
+  // Define el panel de recontacto y la fecha estimada del próximo service.
+  serviceIntervalMonths Int @default(6)
+
   updatedAt DateTime @default(now()) @updatedAt
 }

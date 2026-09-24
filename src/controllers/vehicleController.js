@@ -84,6 +84,12 @@ export const createVehicle = async (
 
     res.status(201).json(vehicle)
   } catch (error) {
+    if (error?.code === "P2002") {
+      return res.status(409).json({
+        message:
+          "Ya existe un vehículo con esa patente. Buscalo para editarlo.",
+      })
+    }
     res.status(500).json(error)
   }
 }
@@ -141,6 +147,43 @@ export const searchVehicle =
     try {
       const { id } = req.params
 
+      // recontacto no se modifica de forma directa desde el form de edición:
+      // se maneja con markRecontacted y con el reset automático de acá abajo.
+      const { recontacto, ...body } = req.body
+
+      const existing =
+        await prisma.vehicle.findUnique({
+          where: { id: Number(id) },
+        })
+
+      if (!existing) {
+        return res.status(404).json({
+          message: "Vehículo no encontrado",
+        })
+      }
+
+      let serviceDate = undefined
+      let resetRecontacto = undefined
+
+      if (body.serviceDate) {
+        serviceDate = new Date(
+          `${body.serviceDate}T12:00:00`
+        )
+
+        const currentDay = existing.serviceDate
+          .toISOString()
+          .split("T")[0]
+
+        const incomingDay = serviceDate
+          .toISOString()
+          .split("T")[0]
+
+        // Si cambió la fecha de service, se reinicia el recontacto.
+        if (currentDay !== incomingDay) {
+          resetRecontacto = false
+        }
+      }
+
       const vehicle =
         await prisma.vehicle.update({
           where: {
@@ -148,30 +191,52 @@ export const searchVehicle =
           },
 
           data: {
-            ...req.body,
+            ...body,
 
-            mileage: req.body
-              .mileage
-              ? Number(
-                  req.body
-                    .mileage
-                )
+            mileage: body.mileage
+              ? Number(body.mileage)
               : undefined,
 
-              serviceDate:
-              req.body.serviceDate
-                ? new Date(
-                    `${req.body.serviceDate}T12:00:00`
+            serviceDate,
+
+            nextServiceMileage:
+              body.nextServiceMileage
+                ? Number(
+                    body.nextServiceMileage
                   )
+                : null,
+
+            recontacto: resetRecontacto,
+
+            // Al reiniciar el recontacto también se limpia su fecha.
+            recontactedAt:
+              resetRecontacto === false
+                ? null
                 : undefined,
-              nextServiceMileage:
-                req.body
-                  .nextServiceMileage
-                  ? Number(
-                      req.body
-                        .nextServiceMileage
-                    )
-                  : null,
+          },
+        })
+
+      res.json(vehicle)
+    } catch (error) {
+      res.status(500).json(error)
+    }
+  }
+
+// Marca el vehículo como recontactado (se llama cuando el admin
+// hace click en el link de WhatsApp del panel de recontacto).
+export const markRecontacted =
+  async (req, res) => {
+    try {
+      const { id } = req.params
+
+      const vehicle =
+        await prisma.vehicle.update({
+          where: {
+            id: Number(id),
+          },
+          data: {
+            recontacto: true,
+            recontactedAt: new Date(),
           },
         })
 

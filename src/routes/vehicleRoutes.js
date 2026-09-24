@@ -6,6 +6,7 @@ import {
   searchVehicle,
   updateVehicle,
   deleteVehicle,
+  markRecontacted,
 } from "../controllers/vehicleController.js";
 
 import {
@@ -35,6 +36,12 @@ router.put(
   "/:id",
   verifyToken,
   updateVehicle
+);
+
+router.patch(
+  "/:id/recontacto",
+  verifyToken,
+  markRecontacted
 );
 
 router.delete(
